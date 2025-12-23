@@ -13,6 +13,37 @@ interface CompressorProps {
   lang: Language;
 }
 
+// Helper to convert any image blob to PNG blob for clipboard compatibility
+const convertToPng = (sourceBlob: Blob): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(sourceBlob);
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Canvas context failed'));
+                return;
+            }
+            // Draw white background for transparent images (optional, but safer for clipboard)
+            // But usually PNG supports transparency on clipboard. Let's keep transparency.
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob((pngBlob) => {
+                if (pngBlob) resolve(pngBlob);
+                else reject(new Error('PNG conversion failed'));
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        };
+        img.onerror = (err) => {
+            URL.revokeObjectURL(url);
+            reject(err);
+        };
+        img.src = url;
+    });
+};
+
 const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) => {
   const [quality, setQuality] = useState(0.85);
   const [targetFormat, setTargetFormat] = useState<string>('image/webp');
@@ -74,11 +105,17 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
     if (!file.processedUrl) return;
     try {
       const response = await fetch(file.processedUrl);
-      const blob = await response.blob();
+      let blob = await response.blob();
+      
+      // ClipboardItem typically requires image/png for broad compatibility.
+      // If the processed file is not PNG (e.g. WebP), we must convert it.
+      if (blob.type !== 'image/png') {
+         blob = await convertToPng(blob);
+      }
       
       await navigator.clipboard.write([
         new ClipboardItem({
-          [blob.type]: blob,
+          'image/png': blob,
         }),
       ]);
       
@@ -86,9 +123,10 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
       setTimeout(() => {
         setCopyStatus(prev => ({ ...prev, [file.id]: false }));
       }, 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Copy failed", err);
-      alert(t.copyFail);
+      // Use more descriptive error if available
+      alert(`${t.copyFail}: ${err.message || 'Clipboard access denied or format unsupported'}`);
     }
   };
 
