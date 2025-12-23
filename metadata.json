@@ -1,0 +1,8 @@
+{
+  "name": "Orion Compress X",
+  "description": "A premium white-label image compression, conversion, and media tool suite powered by Gemini AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
