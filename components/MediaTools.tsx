@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link as LinkIcon, Download, FileAudio, FileVideo, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Link as LinkIcon, Download, FileAudio, FileVideo, AlertCircle, CheckCircle2, Loader2, Lock } from 'lucide-react';
 import Button from './Button';
 import { VIDEO_URL_REGEX } from '../constants';
 import { Language, translations } from '../translations';
+import { useAuth } from '../context/AuthContext';
+import { checkLimit, getRemainingCount, incrementUsage } from '../services/usageService';
 
 interface MediaToolsProps {
   lang: Language;
 }
 
-// Fallback instances in case one is down or rate-limited
-// Using a mix of official and community instances for better reliability
 const API_INSTANCES = [
     'https://api.cobalt.tools/api/json',
     'https://co.wuk.sh/api/json',
@@ -25,8 +25,11 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [progress, setProgress] = useState(0);
   const [downloadUrl, setDownloadUrl] = useState('');
+  const [limitReached, setLimitReached] = useState(false);
 
+  const { user, setShowAuthModal } = useAuth();
   const t = translations[lang].media;
+  const tLimit = translations[lang].limits;
 
   // Reset state when type changes
   useEffect(() => {
@@ -39,18 +42,24 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
   }, [targetType]);
 
   const validateAndProcess = async () => {
+    setLimitReached(false);
     setErrorMsg('');
+    
+    // Check Limits
+    if (!checkLimit('media', user)) {
+        setLimitReached(true);
+        return;
+    }
+
     setStatus('validating');
     setDownloadUrl('');
 
-    // Offline check
     if (!navigator.onLine) {
         setStatus('error');
         setErrorMsg('No internet connection. Please check your network.');
         return;
     }
 
-    // Regex check
     if (!VIDEO_URL_REGEX.test(url)) {
         setTimeout(() => {
             setStatus('error');
@@ -59,7 +68,6 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
         return;
     }
     
-    // Start processing
     setStatus('processing');
     setProgress(10); 
     
@@ -76,9 +84,8 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
 
         for (const apiBase of API_INSTANCES) {
             try {
-                // Controller to timeout requests that hang
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout per instance
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                 const response = await fetch(apiBase, {
                     method: 'POST',
@@ -94,8 +101,8 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
                         disableMetadata: true 
                     }),
                     signal: controller.signal,
-                    mode: 'cors', // Explicitly request CORS
-                    credentials: 'omit' // Prevent sending cookies which can cause CORS issues
+                    mode: 'cors',
+                    credentials: 'omit'
                 });
                 
                 clearTimeout(timeoutId);
@@ -126,6 +133,7 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
             setProgress(100);
             setDownloadUrl(successData.url);
             setStatus('done');
+            incrementUsage('media'); // Count usage on success
         } else {
             throw lastError || new Error('All service instances are currently unavailable.');
         }
@@ -136,7 +144,6 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
         setStatus('error');
         
         let msg = error.message;
-        // Provide helpful hints for common fetch errors
         if (msg === 'Failed to fetch' || msg.includes('NetworkError')) {
             msg = 'Network error: Please disable AdBlockers or check your connection.';
         } else if (msg.includes('aborted')) {
@@ -155,6 +162,8 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
     }
   };
 
+  const remaining = getRemainingCount('media', user);
+
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <div className="text-center space-y-4 mb-10">
@@ -163,8 +172,32 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
           {translations[lang].hero.videoDesc}
         </p>
       </div>
+      
+      {/* Limit Alert */}
+      {limitReached && (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center justify-between animate-fade-in">
+              <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+                      <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                      <h4 className="font-semibold text-orange-900">
+                          {!user ? tLimit.guestLimit : tLimit.userLimit}
+                      </h4>
+                      <p className="text-sm text-orange-700">
+                          {!user ? tLimit.guestLimitDesc : tLimit.userLimitDesc}
+                      </p>
+                  </div>
+              </div>
+              {!user && (
+                  <Button size="sm" onClick={() => setShowAuthModal(true)} className="bg-orange-600 hover:bg-orange-700 text-white border-none">
+                      {tLimit.loginBtn}
+                  </Button>
+              )}
+          </div>
+      )}
 
-      <div className="bg-white rounded-2xl shadow-xl border border-indigo-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl border border-indigo-100 overflow-hidden relative">
         <div className="p-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-20 h-2"></div>
         
         <div className="p-8 space-y-6">
@@ -184,6 +217,7 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
                     setUrl(e.target.value);
                     if (status === 'error') setStatus('idle');
                     if (status === 'done') setStatus('idle');
+                    if (limitReached) setLimitReached(false);
                 }}
                 disabled={status === 'processing' || status === 'validating'}
                 />
@@ -242,6 +276,11 @@ const MediaTools: React.FC<MediaToolsProps> = ({ lang }) => {
                 </div>
             ) : t.start}
           </Button>
+
+          {/* Limit Counter */}
+          <div className="text-center text-xs text-slate-400 font-medium mt-2">
+             {tLimit.remaining} <span className={remaining === 0 ? "text-red-500 font-bold" : "text-slate-600"}>{remaining}</span>
+          </div>
 
           {status === 'processing' && (
             <div className="space-y-2 animate-fade-in">

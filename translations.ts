@@ -6,7 +6,9 @@ export const translations = {
       compress: 'Compress',
       convert: 'Convert',
       video: 'Video Tools',
-      appName: 'Orion Compress X'
+      appName: 'Orion Compress X',
+      signIn: 'Sign In',
+      logout: 'Logout'
     },
     hero: {
       compressTitle: 'Smart Image Compression',
@@ -15,6 +17,34 @@ export const translations = {
       convertDesc: 'Convert between WebP, JPG, PNG and more instantly in your browser.',
       videoTitle: 'Universal Media Downloader',
       videoDesc: 'Download video (MP4) or extract audio (MP3) from YouTube, Vimeo, TikTok, Instagram, and more.'
+    },
+    auth: {
+      signInTitle: 'Welcome Back',
+      signUpTitle: 'Create Account',
+      nameLabel: 'Full Name',
+      namePlaceholder: 'John Doe',
+      accountLabel: 'Email or Phone',
+      emailLabel: 'Email',
+      accountPlaceholder: 'name@example.com or +1...',
+      emailPlaceholder: 'name@example.com',
+      phoneLabel: 'Phone Number',
+      passwordLabel: 'Password',
+      confirmPasswordLabel: 'Confirm Password',
+      signInBtn: 'Sign In',
+      signUpBtn: 'Create Account',
+      noAccount: "Don't have an account?",
+      hasAccount: "Already have an account?",
+      signUpLink: 'Sign up',
+      signInLink: 'Sign in',
+      optional: 'Optional'
+    },
+    limits: {
+      guestLimit: 'Guest Daily Limit Reached',
+      guestLimitDesc: 'You have used your free daily allowance. Please sign in to continue.',
+      loginBtn: 'Sign In / Register',
+      userLimit: 'Daily Limit Reached',
+      userLimitDesc: 'You have reached the daily limit for this feature.',
+      remaining: 'Remaining today: '
     },
     uploader: {
       title: 'Click, Paste, or Drop files here',
@@ -71,7 +101,9 @@ export const translations = {
       compress: '图片压缩',
       convert: '格式转换',
       video: '视频工具',
-      appName: 'Orion 压缩大师'
+      appName: 'Orion 压缩大师',
+      signIn: '登录',
+      logout: '退出'
     },
     hero: {
       compressTitle: '智能图片压缩',
@@ -80,6 +112,34 @@ export const translations = {
       convertDesc: '浏览器内极速转换 WebP, JPG, PNG 等多种格式。',
       videoTitle: '万能媒体下载器',
       videoDesc: '支持从 YouTube, Vimeo, TikTok, Instagram 等平台下载视频 (MP4) 或提取音频 (MP3)。'
+    },
+    auth: {
+      signInTitle: '欢迎回来',
+      signUpTitle: '创建账号',
+      nameLabel: '昵称',
+      namePlaceholder: '您的昵称',
+      accountLabel: '邮箱或手机号',
+      emailLabel: '邮箱',
+      accountPlaceholder: 'name@example.com 或 +86...',
+      emailPlaceholder: 'name@example.com',
+      phoneLabel: '手机号',
+      passwordLabel: '密码',
+      confirmPasswordLabel: '确认密码',
+      signInBtn: '登录',
+      signUpBtn: '注册账号',
+      noAccount: "还没有账号？",
+      hasAccount: "已有账号？",
+      signUpLink: '去注册',
+      signInLink: '去登录',
+      optional: '可选'
+    },
+    limits: {
+      guestLimit: '今日免费额度已用完',
+      guestLimitDesc: '您的游客免费额度已耗尽。登录后可获取更多使用权限。',
+      loginBtn: '登录 / 注册',
+      userLimit: '今日限额已达',
+      userLimitDesc: '您已达到该功能的今日使用上限。',
+      remaining: '今日剩余：'
     },
     uploader: {
       title: '点击、粘贴或拖拽文件到这里',

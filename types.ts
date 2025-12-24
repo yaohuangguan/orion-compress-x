@@ -4,6 +4,20 @@ export enum AppMode {
   MEDIA_DOWNLOAD = 'MEDIA_DOWNLOAD'
 }
 
+export interface User {
+  id: string;
+  displayName: string;
+  email: string;
+  phone?: string;
+  vip?: boolean;
+  avatar?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
 export interface UploadedFile {
   id: string;
   file: File;

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { UploadedFile } from '../types';
 import { formatBytes, compressImage } from '../services/imageService';
-import { Download, Trash2, ArrowRight, Check, Sparkles, Copy, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { Download, Trash2, ArrowRight, Check, Sparkles, Copy, ClipboardCheck, AlertTriangle, Lock } from 'lucide-react';
 import Button from './Button';
 import { FORMAT_OPTIONS } from '../constants';
 import { Language, translations } from '../translations';
+import { useAuth } from '../context/AuthContext';
+import { checkLimit, getRemainingCount, incrementUsage } from '../services/usageService';
 
 interface CompressorProps {
   files: UploadedFile[];
@@ -27,8 +29,6 @@ const convertToPng = (sourceBlob: Blob): Promise<Blob> => {
                 reject(new Error('Canvas context failed'));
                 return;
             }
-            // Draw white background for transparent images (optional, but safer for clipboard)
-            // But usually PNG supports transparency on clipboard. Let's keep transparency.
             ctx.drawImage(img, 0, 0);
             canvas.toBlob((pngBlob) => {
                 if (pngBlob) resolve(pngBlob);
@@ -49,38 +49,65 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
   const [targetFormat, setTargetFormat] = useState<string>('image/webp');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copyStatus, setCopyStatus] = useState<{[key: string]: boolean}>({});
+  const [limitReached, setLimitReached] = useState(false);
 
+  const { user, setShowAuthModal } = useAuth();
   const t = translations[lang].compressor;
+  const tLimit = translations[lang].limits;
 
   const handleRemove = (id: string) => {
     setFiles(prev => prev.filter(f => f.id !== id));
   };
 
   const processFiles = async () => {
+    const usageType = mode === 'compress' ? 'compress' : 'convert';
+    
+    // Check Limits
+    if (!checkLimit(usageType, user)) {
+        setLimitReached(true);
+        return;
+    }
+
     setIsProcessing(true);
     const newFiles = [...files];
 
-    // Reset status for re-processing to give visual feedback
+    // Reset status
     setFiles(newFiles.map(f => ({ ...f, status: 'processing' })));
 
+    // Only process one file at a time to check limits on each if needed, 
+    // but here we just check once per batch or we need to check per file?
+    // The requirement says "5 compressions". If batch has 10, we should probably stop after 5 for guests.
+    // For simplicity, we check if they have ANY allowance left to start the batch, 
+    // OR we count each file. Let's count each file for strict enforcement.
+
+    let processedCount = 0;
+
     for (const file of newFiles) {
-      // We removed the 'if status === done continue' check to allow re-compression
+      // Check limit before EACH file
+      if (!checkLimit(usageType, user)) {
+          file.status = 'error'; // Mark remainder as error or idle
+          setLimitReached(true);
+          break; // Stop processing
+      }
+
       try {
-        // Update individual file status to ensure UI reflects processing state
         file.status = 'processing';
         setFiles([...newFiles]);
         
-        // Small delay to allow UI to update
         await new Promise(r => requestAnimationFrame(r));
 
         const usedQuality = mode === 'convert' ? 0.95 : quality;
         const blob = await compressImage(file.file, usedQuality, targetFormat);
         
-        // If there was a previous URL, ideally we should revoke it, but for simplicity in this flow we overwrite.
         file.processedUrl = URL.createObjectURL(blob);
         file.processedSize = blob.size;
         file.format = targetFormat;
         file.status = 'done';
+        
+        // Increment usage
+        incrementUsage(usageType);
+        processedCount++;
+
       } catch (error) {
         console.error(error);
         file.status = 'error';
@@ -106,27 +133,21 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
     try {
       const response = await fetch(file.processedUrl);
       let blob = await response.blob();
-      
-      // ClipboardItem typically requires image/png for broad compatibility.
-      // If the processed file is not PNG (e.g. WebP), we must convert it.
       if (blob.type !== 'image/png') {
          blob = await convertToPng(blob);
       }
-      
       await navigator.clipboard.write([
         new ClipboardItem({
           'image/png': blob,
         }),
       ]);
-      
       setCopyStatus(prev => ({ ...prev, [file.id]: true }));
       setTimeout(() => {
         setCopyStatus(prev => ({ ...prev, [file.id]: false }));
       }, 2000);
     } catch (err: any) {
       console.error("Copy failed", err);
-      // Use more descriptive error if available
-      alert(`${t.copyFail}: ${err.message || 'Clipboard access denied or format unsupported'}`);
+      alert(`${t.copyFail}: ${err.message}`);
     }
   };
 
@@ -139,10 +160,35 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
   if (files.length === 0) return null;
 
   const allDone = files.length > 0 && files.every(f => f.status === 'done');
+  const remaining = getRemainingCount(mode === 'compress' ? 'compress' : 'convert', user);
 
   return (
     <div className="w-full space-y-6">
       
+      {/* Limit Alert */}
+      {limitReached && (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center justify-between animate-fade-in">
+              <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+                      <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                      <h4 className="font-semibold text-orange-900">
+                          {!user ? tLimit.guestLimit : tLimit.userLimit}
+                      </h4>
+                      <p className="text-sm text-orange-700">
+                          {!user ? tLimit.guestLimitDesc : tLimit.userLimitDesc}
+                      </p>
+                  </div>
+              </div>
+              {!user && (
+                  <Button size="sm" onClick={() => setShowAuthModal(true)} className="bg-orange-600 hover:bg-orange-700 text-white border-none">
+                      {tLimit.loginBtn}
+                  </Button>
+              )}
+          </div>
+      )}
+
       {/* Controls */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-4 z-20">
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
@@ -168,10 +214,6 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
                         onChange={(e) => setQuality(parseFloat(e.target.value))}
                         className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
-                      <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium">
-                          <span>{t.maxComp}</span>
-                          <span>{t.maxQual}</span>
-                      </div>
                   </div>
                 )}
 
@@ -196,23 +238,29 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
 
             </div>
 
-            <div className="flex gap-3 w-full lg:w-auto">
-                <Button onClick={processFiles} isLoading={isProcessing} size="lg" className="flex-1 lg:flex-none shadow-md shadow-indigo-100">
-                  {allDone 
-                    ? (mode === 'compress' 
-                        ? t.reCompressBtn.replace('{n}', files.length.toString()) 
-                        : t.reConvertBtn.replace('{n}', files.length.toString()))
-                    : (mode === 'compress' 
-                        ? t.compressBtn.replace('{n}', files.length.toString()) 
-                        : t.convertBtn.replace('{n}', files.length.toString()))
-                  }
-                </Button>
-                
-                {files.some(f => f.status === 'done') && (
-                    <Button onClick={handleDownloadAll} variant="secondary" size="lg" className="flex-1 lg:flex-none" title={t.downloadAll}>
-                        <Download className="w-5 h-5" />
+            <div className="flex flex-col items-end gap-2 w-full lg:w-auto">
+                <div className="flex gap-3 w-full lg:w-auto">
+                    <Button onClick={processFiles} isLoading={isProcessing} size="lg" className="flex-1 lg:flex-none shadow-md shadow-indigo-100">
+                    {allDone 
+                        ? (mode === 'compress' 
+                            ? t.reCompressBtn.replace('{n}', files.length.toString()) 
+                            : t.reConvertBtn.replace('{n}', files.length.toString()))
+                        : (mode === 'compress' 
+                            ? t.compressBtn.replace('{n}', files.length.toString()) 
+                            : t.convertBtn.replace('{n}', files.length.toString()))
+                    }
                     </Button>
-                )}
+                    
+                    {files.some(f => f.status === 'done') && (
+                        <Button onClick={handleDownloadAll} variant="secondary" size="lg" className="flex-1 lg:flex-none" title={t.downloadAll}>
+                            <Download className="w-5 h-5" />
+                        </Button>
+                    )}
+                </div>
+                {/* Usage Counter Display */}
+                <div className="text-xs text-slate-400 font-medium">
+                     {tLimit.remaining} <span className={remaining === 0 ? "text-red-500 font-bold" : "text-slate-600"}>{remaining}</span>
+                </div>
             </div>
         </div>
       </div>
