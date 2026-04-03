@@ -5,7 +5,8 @@ export const SUPPORTED_IMAGE_TYPES = [
   'image/gif',
   'image/bmp',
   'image/avif',
-  'image/tiff'
+  'image/tiff',
+  'application/pdf'
 ];
 
 export const COMPRESSION_PRESETS = [

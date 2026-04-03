@@ -48,7 +48,7 @@ export const translations = {
     },
     uploader: {
       title: 'Click, Paste, or Drop files here',
-      sub: 'Supports JPG, PNG, WEBP, GIF, BMP',
+      sub: 'Supports JPG, PNG, WEBP, GIF, BMP, PDF',
       paste: 'CMD+V',
       drag: 'Drag & Drop'
     },
@@ -74,7 +74,9 @@ export const translations = {
       ready: 'Ready',
       error: 'Error',
       copied: 'Copied!',
-      copyFail: 'Failed'
+      copyFail: 'Failed',
+      pdfMaxMB: 'Target Size (MB)',
+      pdfWarning: 'PDF compression uses an image-based conversion method. Text will no longer be selectable.'
     },
     media: {
       inputPlaceholder: 'Paste video URL here (e.g., youtube.com...)',
@@ -143,7 +145,7 @@ export const translations = {
     },
     uploader: {
       title: '点击、粘贴或拖拽文件到这里',
-      sub: '支持 JPG, PNG, WEBP, GIF, BMP',
+      sub: '支持 JPG, PNG, WEBP, GIF, BMP, PDF',
       paste: '粘贴',
       drag: '拖拽'
     },
@@ -169,7 +171,9 @@ export const translations = {
       ready: '完成',
       error: '错误',
       copied: '已复制',
-      copyFail: '失败'
+      copyFail: '失败',
+      pdfMaxMB: '目标最大体积 (MB)',
+      pdfWarning: 'PDF 压缩会在前端将其转换为全图像格式，原始的可选中文字将变为图片（不再可被鼠标拖选复制），但换取的是极高的体积缩减和符合目标大小。'
     },
     media: {
       inputPlaceholder: '在此粘贴视频链接 (例如 youtube.com...)',

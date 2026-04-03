@@ -23,7 +23,7 @@ const App: React.FC = () => {
 
   const t = translations[lang];
 
-  const handleFilesSelected = (newFiles: File[]) => {
+  const handleFilesSelected = async (newFiles: File[]) => {
     const uploadedFiles: UploadedFile[] = newFiles.map(file => ({
       id: Math.random().toString(36).substring(7),
       file,
@@ -35,6 +35,19 @@ const App: React.FC = () => {
     setFiles(prev => [...prev, ...uploadedFiles]);
     if (activeTab === AppMode.MEDIA_DOWNLOAD) {
         setActiveTab(AppMode.COMPRESS);
+    }
+    
+    // Generate PDF previews asynchronously
+    for (const fileObj of uploadedFiles) {
+        if (fileObj.file.type === 'application/pdf') {
+            import('./services/pdfCompressor').then(({ generatePdfPreview }) => {
+                generatePdfPreview(fileObj.file).then(previewUrl => {
+                    if (previewUrl) {
+                        setFiles(prev => prev.map(f => f.id === fileObj.id ? { ...f, previewUrl } : f));
+                    }
+                });
+            });
+        }
     }
   };
 
