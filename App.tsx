@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Layers, Image as ImageIcon, Video, Menu, X, Globe, Aperture, User as UserIcon, LogOut, LogIn } from 'lucide-react';
+import { Layers, Image as ImageIcon, Video, Menu, X, Globe, Aperture, User as UserIcon, LogOut, LogIn, FileStack } from 'lucide-react';
 import { AppMode, UploadedFile } from './types';
 import ImageUploader from './components/ImageUploader';
 import Compressor from './components/Compressor';
 import MediaTools from './components/MediaTools';
+import PdfMerger from './components/PdfMerger';
 import { Language, translations } from './translations';
 import { useAuth } from './context/AuthContext';
 import AuthModal from './components/AuthModal';
@@ -54,6 +55,7 @@ const App: React.FC = () => {
   const tabs = [
     { id: AppMode.COMPRESS, label: t.nav.compress, icon: Layers },
     { id: AppMode.CONVERT, label: t.nav.convert, icon: ImageIcon },
+    { id: AppMode.MERGE_PDF, label: (t.nav as any).mergePdf, icon: FileStack },
     { id: AppMode.MEDIA_DOWNLOAD, label: t.nav.video, icon: Video },
   ];
 
@@ -241,6 +243,8 @@ const App: React.FC = () => {
         {/* Render content based on tab */}
         {activeTab === AppMode.MEDIA_DOWNLOAD ? (
            <MediaTools lang={lang} />
+        ) : activeTab === AppMode.MERGE_PDF ? (
+           <PdfMerger lang={lang} />
         ) : (
            <div className="space-y-8 animate-fade-in">
               <div className="text-center space-y-2 mb-8">

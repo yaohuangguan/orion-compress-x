@@ -1,7 +1,8 @@
 export enum AppMode {
   COMPRESS = 'COMPRESS',
   CONVERT = 'CONVERT',
-  MEDIA_DOWNLOAD = 'MEDIA_DOWNLOAD'
+  MEDIA_DOWNLOAD = 'MEDIA_DOWNLOAD',
+  MERGE_PDF = 'MERGE_PDF'
 }
 
 export interface User {

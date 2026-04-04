@@ -6,6 +6,7 @@ export const translations = {
       compress: 'Compress',
       convert: 'Convert',
       video: 'Video Tools',
+      mergePdf: 'Merge PDF',
       appName: 'Orion Compress X',
       signIn: 'Sign In',
       logout: 'Logout'
@@ -16,7 +17,9 @@ export const translations = {
       convertTitle: 'Universal Image Conversion',
       convertDesc: 'Convert between WebP, JPG, PNG and more instantly in your browser.',
       videoTitle: 'Universal Media Downloader',
-      videoDesc: 'Download video (MP4) or extract audio (MP3) from YouTube, Vimeo, TikTok, Instagram, and more.'
+      videoDesc: 'Download video (MP4) or extract audio (MP3) from YouTube, Vimeo, TikTok, Instagram, and more.',
+      mergePdfTitle: 'Lossless PDF Merger',
+      mergePdfDesc: 'Combine multiple PDF files into one without losing original quality.'
     },
     auth: {
       signInTitle: 'Welcome Back',
@@ -78,6 +81,16 @@ export const translations = {
       pdfMaxMB: 'Target Size (MB)',
       pdfWarning: 'PDF compression uses an image-based conversion method. Text will no longer be selectable.'
     },
+    pdfMerger: {
+      mergeBtn: 'Merge {n} PDFs',
+      downloadBtn: 'Download Merged PDF',
+      processing: 'Merging...',
+      ready: 'Merged successfully',
+      error: 'Error merging PDFs',
+      moveUp: 'Move Up',
+      moveDown: 'Move Down',
+      remove: 'Remove'
+    },
     media: {
       inputPlaceholder: 'Paste video URL here (e.g., youtube.com...)',
       mp4Btn: 'Convert to MP4',
@@ -103,6 +116,7 @@ export const translations = {
       compress: '图片压缩',
       convert: '格式转换',
       video: '视频工具',
+      mergePdf: '合并 PDF',
       appName: 'Orion 压缩大师',
       signIn: '登录',
       logout: '退出'
@@ -113,7 +127,9 @@ export const translations = {
       convertTitle: '万能格式转换',
       convertDesc: '浏览器内极速转换 WebP, JPG, PNG 等多种格式。',
       videoTitle: '万能媒体下载器',
-      videoDesc: '支持从 YouTube, Vimeo, TikTok, Instagram 等平台下载视频 (MP4) 或提取音频 (MP3)。'
+      videoDesc: '支持从 YouTube, Vimeo, TikTok, Instagram 等平台下载视频 (MP4) 或提取音频 (MP3)。',
+      mergePdfTitle: '无损 PDF 合并',
+      mergePdfDesc: '将多个 PDF 文件合并为一个，保持原始质量不变。'
     },
     auth: {
       signInTitle: '欢迎回来',
@@ -174,6 +190,16 @@ export const translations = {
       copyFail: '失败',
       pdfMaxMB: '目标最大体积 (MB)',
       pdfWarning: 'PDF 压缩会在前端将其转换为全图像格式，原始的可选中文字将变为图片（不再可被鼠标拖选复制），但换取的是极高的体积缩减和符合目标大小。'
+    },
+    pdfMerger: {
+      mergeBtn: '合并 {n} 个 PDF',
+      downloadBtn: '下载合并后的 PDF',
+      processing: '合并中...',
+      ready: '合并成功',
+      error: '合并错误',
+      moveUp: '上移',
+      moveDown: '下移',
+      remove: '移除'
     },
     media: {
       inputPlaceholder: '在此粘贴视频链接 (例如 youtube.com...)',
