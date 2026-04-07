@@ -23,6 +23,8 @@ export const FORMAT_OPTIONS = [
   { value: 'image/avif', label: 'AVIF (Best Compression)' },
   { value: 'image/bmp', label: 'BMP' },
   { value: 'image/gif', label: 'GIF (Static)' },
+  { value: 'application/pdf', label: 'PDF Document' },
+  { value: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', label: 'Word (Editable)' },
 ];
 
 export const VIDEO_URL_REGEX = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|instagram\.com)\/.+$/;

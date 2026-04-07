@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UploadedFile } from '../types';
 import { formatBytes, compressImage } from '../services/imageService';
 import { compressPdf } from '../services/pdfCompressor';
+import { imageToPdf, imageToDocx, pdfToDocx } from '../services/convertService';
 import { Download, Trash2, ArrowRight, Check, Sparkles, Copy, ClipboardCheck, AlertTriangle, Lock, FileText } from 'lucide-react';
 import Button from './Button';
 import { FORMAT_OPTIONS } from '../constants';
@@ -103,7 +104,21 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
         const usedQuality = mode === 'convert' ? 0.95 : quality;
         let blob: Blob;
 
-        if (file.file.type === 'application/pdf') {
+        if (mode === 'convert' && targetFormat === 'application/pdf') {
+            if (file.file.type === 'application/pdf') {
+                blob = file.file;
+            } else {
+                blob = await imageToPdf(file.file);
+            }
+            file.format = 'application/pdf';
+        } else if (mode === 'convert' && targetFormat === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            if (file.file.type === 'application/pdf') {
+                blob = await pdfToDocx(file.file);
+            } else {
+                blob = await imageToDocx(file.file);
+            }
+            file.format = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        } else if (file.file.type === 'application/pdf') {
             blob = await compressPdf(file.file, targetPdfMb === '' ? undefined : targetPdfMb, (msg) => {
                 // optionally update file status message here later
             });
@@ -134,7 +149,14 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
     if (!file.processedUrl) return;
     const a = document.createElement('a');
     a.href = file.processedUrl;
-    const ext = file.format ? file.format.split('/')[1] : 'webp';
+    let ext = 'webp';
+    if (file.format) {
+        if (file.format === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            ext = 'docx';
+        } else {
+            ext = file.format.split('/')[1];
+        }
+    }
     a.download = `orion_${mode}_${file.name.split('.')[0]}.${ext}`;
     document.body.appendChild(a);
     a.click();
@@ -256,7 +278,7 @@ const Compressor: React.FC<CompressorProps> = ({ files, setFiles, mode, lang }) 
                 {!hasPdf && (
                   <div className="min-w-[280px]">
                       <label className="block text-sm font-medium text-slate-700 mb-3">{t.target}</label>
-                      <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                      <div className="grid grid-cols-4 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
                           {FORMAT_OPTIONS.map(opt => (
                               <button
                                   key={opt.value}
