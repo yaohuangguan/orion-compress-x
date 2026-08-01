@@ -71,7 +71,7 @@ const PdfMerger: React.FC<PdfMergerProps> = ({ lang }) => {
 
       for (const file of files) {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
+        const pdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
       }
